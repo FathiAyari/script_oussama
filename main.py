@@ -1,8 +1,12 @@
+
 import os
+import time
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
+
 import pymysql
 
 # Directory path
-directory = 'my_folder'
 connection_config = {
     'host': '127.0.0.1',
     'user': 'root',
@@ -11,160 +15,158 @@ connection_config = {
     'port': 3306
 }
 
-# Create a new file to store the imported files
-importedData = 'imported_files.txt'
-file_path = os.path.join("", importedData)
-# Create a new file
-if not os.path.exists(importedData):
 
-    file_path = os.path.join("", importedData)
-    # Create a new file
-    with open(file_path, 'w') as file:
-        print(f"File '{importedData}' created in main project'.")
+def treat_data(file_path):
+    flag = False
+    valuesX = []
+    valuesY = []
+    flag2 = False
+    valuesX1 = []
+    valuesYu = []
+    valuesYo = []
 
-#get the treated files from the file importedData
-treatedDataFile=[]
-with open(importedData, 'r') as fileToTreat:
-    lines = fileToTreat.readlines()
-    for i, line in enumerate(lines, start=1):
-        if line.strip():
-            treatedDataFile.append(line.rstrip('\n'))
+    with open(file_path, 'r') as fileToTreat:
+        # Read all lines from the file
+        lines = fileToTreat.readlines()
 
-print("the treated data are : ",treatedDataFile)
+        x = ""
+        y = ""
+        # Display each line with its line number
+        for i, line in enumerate(lines, start=1):
+            if i == 5:
+                date = line.strip().split(":")[1]
+            if i == 6:
+                werkauftrag = line.strip().split(":")[1]
 
-# List all files in the directory
-files = os.listdir(directory)
+            if flag:
+                if i % 2 == 0:
+                    valuesX.extend([int(val) for val in line.strip().split()])
+                else:
+                    valuesY.extend([int(val) for val in line.strip().split()])
 
-# Filter out only the .txt files
-txt_files = [file for file in files if file.endswith('.txt')]
+            if i == 18:
+                valuesX1.extend([str(val) for val in line.strip().split()])
+            if i == 19:
+                valuesYu.extend([str(val) for val in line.strip().split()])
+            if i == 21:
+                valuesYo.extend([str(val) for val in line.strip().split()])
 
-# Display the names of the .txt files
-files=[]
-for file in txt_files:
+            if line.strip() == "Messreihen (X,Y)":
+                flag = True
 
-    files.append(file)
+    # Database connection details
 
+    try:
+        connection = pymysql.connect(**connection_config)
+        print("Connected to MySQL database")
+        cursor = connection.cursor()
 
-for file in files:
-    if not file in treatedDataFile:
-        # Open the file in append mode and write the new line
-        with open(file_path, 'a') as tr:
-            if not os.path.getsize(file_path) ==0:
-                tr.write('\n')  # Add a newline character before appending the new line
-            new_line = file
-            tr.write(new_line)
+        create_table_query = """
+            CREATE TABLE IF NOT EXISTS your_table (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                x int(10),
+                y int(10),
+                werkauftrag varchar(255),
+                datum varchar(255)
+            )
+        """
 
-        print("New line written to the file.")
+        # Execute the SQL query
+        cursor.execute(create_table_query)
+        print("Table created successfully or already exists")
 
-        # Open the file in read mode
-        flag = False
-        valuesX = []
-        valuesY = []
-        flag2 = False
-        valuesX1 = []
-        valuesYu = []
-        valuesYo = []
-        with open('my_folder/' + file, 'r') as fileToTreat:
-            # Read all lines from the file
-            lines = fileToTreat.readlines()
+        data_to_insert = [(x, y, werkauftrag, date) for x, y in zip(valuesX, valuesY)]
+        # SQL query to insert data1.txt into the table
+        insert_query = """
+            INSERT INTO your_table (x, y,werkauftrag, datum)
+            VALUES (%s, %s, %s,%s)
+        """
+        # Execute the SQL query for each data1.txt row
+        cursor.executemany(insert_query, data_to_insert)
+        connection.commit()
+        print("Data inserted successfully to your_table")
 
-            x = ""
-            y = ""
-            # Display each line with its line number
-            for i, line in enumerate(lines, start=1):
-                if i == 5:
-                    date = line.strip().split(":")[1]
-                if i == 6:
-                    werkauftrag = line.strip().split(":")[1]
+        ###############################################################################
 
-                if flag:
-                    if i % 2 == 0:
-                        valuesX.extend([int(val) for val in line.strip().split()])
-                    else:
-                        valuesY.extend([int(val) for val in line.strip().split()])
+        create_table2_query = """
+            CREATE TABLE IF NOT EXISTS your_table2 (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                x varchar(255),
+                yu varchar(255),
+                yo varchar(255),
+                werkauftrag varchar(255),
+                datum varchar(255)
+            )
+        """
 
-                if i ==18:
-                    valuesX1.extend([str(val) for val in line.strip().split()])
-                if i ==19:
-                    valuesYu.extend([str(val) for val in line.strip().split()])
-                if i ==21:
-                    valuesYo.extend([str(val) for val in line.strip().split()])
+        # Execute the SQL query
+        cursor.execute(create_table2_query)
+        print("Table created successfully or already exists")
 
-
-                if line.strip() == "Messreihen (X,Y)":
-                    flag = True
-
-
-        # Database connection details
-
-        try:
-            connection = pymysql.connect(**connection_config)
-            print("Connected to MySQL database")
-            cursor = connection.cursor()
-
-            create_table_query = """
-                    CREATE TABLE IF NOT EXISTS your_table (
-                        id INT AUTO_INCREMENT PRIMARY KEY,
-                        x int(10),
-                        y int(10),
-                        werkauftrag varchar(255),
-                        datum varchar(255)
-                    )
-                """
-
-            # Execute the SQL query
-            cursor.execute(create_table_query)
-            print("Table created successfully or already exists")
-
-            data_to_insert = [(x, y, werkauftrag, date) for x, y in zip(valuesX, valuesY)]
-            # SQL query to insert data1.txt into the table
-            insert_query = """
-                    INSERT INTO your_table (x, y,werkauftrag, datum)
-                    VALUES (%s, %s, %s,%s)
-                """
-            # Execute the SQL query for each data1.txt row
-            cursor.executemany(insert_query, data_to_insert)
-            connection.commit()
-            print("Data inserted successfully to your_table")
-
-            ###############################################################################
-
-            create_table2_query = """
-                                CREATE TABLE IF NOT EXISTS your_table2 (
-                                    id INT AUTO_INCREMENT PRIMARY KEY,
-                                    x varchar(255),
-                                    yu varchar(255),
-                                    yo varchar(255),
-                                    werkauftrag varchar(255),
-                                    datum varchar(255)
-                                )
-                            """
-
-            # Execute the SQL query
-            cursor.execute(create_table2_query)
-            print("Table created successfully or already exists")
-
-            data_to_insert = [(x, yo,yu, werkauftrag, date) for x, yu,yo in zip(valuesX1, valuesYu,valuesYo)]
-            # SQL query to insert data1.txt into the table
-            insert_query = """
-                                INSERT INTO your_table2 (x, yu,yo,werkauftrag, datum)
-                                VALUES (%s, %s,%s, %s,%s)
-                            """
-            # Execute the SQL query for each data1.txt row
-            cursor.executemany(insert_query, data_to_insert)
-            connection.commit()
-            print("Data inserted successfully to your_table2")
-        except pymysql.Error as e:
-            print(f"Error connecting to MySQL database: {e}")
-
-        finally:
-            # Close cursor and connection
-            if 'cursor' in locals():
-                cursor.close()
-            if 'connection' in locals() and connection.open:
-                connection.close()
+        data_to_insert = [(x, yo, yu, werkauftrag, date) for x, yu, yo in zip(valuesX1, valuesYu, valuesYo)]
+        # SQL query to insert data1.txt into the table
+        insert_query = """
+            INSERT INTO your_table2 (x, yu,yo,werkauftrag, datum)
+            VALUES (%s, %s,%s, %s,%s)
+        """
+        # Execute the SQL query for each data1.txt row
+        cursor.executemany(insert_query, data_to_insert)
+        connection.commit()
+        print("Data inserted successfully to your_table2")
+    except pymysql.Error as e:
+        print(f"Error connecting to MySQL database: {e}")
+    finally:
+        # Close cursor and connection
+        if 'cursor' in locals():
+            cursor.close()
+        if 'connection' in locals() and connection.open:
+            connection.close()
 
 
+class MyHandler(FileSystemEventHandler):
+    def __init__(self, log_file):
+        super().__init__()
+        self.log_file = log_file
+
+    def log_event(self, event_type, file_path):
+        with open(self.log_file, 'a') as f:
+            timestamp = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
+            username = os.getenv('USER') or os.getenv('USERNAME')  # Get current user
+            f.write(f"{timestamp} - {username} - {event_type}: {file_path}\n")
+
+    def on_any_event(self, event):
+        if event.is_directory:
+            return  # Ignore directory events
+
+        if event.event_type == 'created':
+
+            self.log_event('Created', event.src_path)
+            treat_data(event.src_path)
+        elif event.event_type == 'deleted':
+
+            self.log_event('Deleted', event.src_path)
 
 
+# Function to start the observer
+def start_observer(directory, log_file):
+    event_handler = MyHandler(log_file)
+    observer = Observer()
+    observer.schedule(event_handler, directory, recursive=True)
+    observer.start()
+    print(f"Watching directory: {directory}")
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        observer.stop()
+    observer.join()
 
+
+# Directory to monitor
+directory_to_monitor = "C:\lib"
+
+# Log file
+log_file = "log.txt"
+
+# Start monitoring the directory
+start_observer(directory_to_monitor, log_file)
