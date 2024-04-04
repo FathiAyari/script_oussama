@@ -1,7 +1,0 @@
-2024-04-02 20:53:14 - Fathi Ayari - Created: D:hello.txt
-2024-04-02 20:53:18 - Fathi Ayari - Created: D:$RECYCLE.BIN\S-1-5-21-11504986-1470667700-4035375294-1001\$ION32XE.txt
-2024-04-02 20:53:18 - Fathi Ayari - Deleted: D:hello.txt
-2024-04-02 20:53:18 - Fathi Ayari - Created: D:$RECYCLE.BIN\S-1-5-21-11504986-1470667700-4035375294-1001\$RON32XE.txt
-2024-04-02 20:54:38 - Fathi Ayari - Created: C:main.py~
-2024-04-02 20:54:51 - Fathi Ayari - Created: D:hello.txt
-2024-04-02 20:57:49 - Fathi Ayari - Created: C:\lib\hello.txt
