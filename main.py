@@ -55,7 +55,48 @@ def treat_data(file_path):
 
             if line.strip() == "Messreihen (X,Y)":
                 flag = True
+            if valuesX1 and valuesYo and valuesYu:
+                try:
+                    connection = pymysql.connect(**connection_config)
+                    print("Connected to MySQL database")
+                    cursor = connection.cursor()
 
+                    create_table2_query = """
+                        CREATE TABLE IF NOT EXISTS your_table2 (
+                            id INT AUTO_INCREMENT PRIMARY KEY,
+                            x varchar(255),
+                            yu varchar(255),
+                            yo varchar(255),
+                            werkauftrag varchar(255),
+                            datum varchar(255)
+                        )
+                    """
+
+                    # Execute the SQL query
+                    cursor.execute(create_table2_query)
+                    print("Table created successfully or already exists")
+
+                    data_to_insert = [(x, yo, yu, werkauftrag, date) for x, yu, yo in zip(valuesX1, valuesYu, valuesYo)]
+                    # SQL query to insert data1.txt into the table
+                    insert_query = """
+                        INSERT INTO your_table2 (x, yu,yo,werkauftrag, datum)
+                        VALUES (%s, %s,%s, %s,%s)
+                    """
+                    # Execute the SQL query for each data1.txt row
+                    cursor.executemany(insert_query, data_to_insert)
+                    connection.commit()
+                    print("Data inserted successfully to your_table2")
+                except pymysql.Error as e:
+                    print(f"Error connecting to MySQL database: {e}")
+                finally:
+                    # Close cursor and connection
+                    if 'cursor' in locals():
+                        cursor.close()
+                    if 'connection' in locals() and connection.open:
+                        connection.close()
+                valuesX1=[]
+                valuesYu=[]
+                valuesYo=[]
             if flag_write:
 
                 try:
@@ -103,31 +144,6 @@ def treat_data(file_path):
 
                     ###############################################################################
 
-                    create_table2_query = """
-                        CREATE TABLE IF NOT EXISTS your_table2 (
-                            id INT AUTO_INCREMENT PRIMARY KEY,
-                            x varchar(255),
-                            yu varchar(255),
-                            yo varchar(255),
-                            werkauftrag varchar(255),
-                            datum varchar(255)
-                        )
-                    """
-
-                    # Execute the SQL query
-                    cursor.execute(create_table2_query)
-                    print("Table created successfully or already exists")
-
-                    data_to_insert = [(x, yo, yu, werkauftrag, date) for x, yu, yo in zip(valuesX1, valuesYu, valuesYo)]
-                    # SQL query to insert data1.txt into the table
-                    insert_query = """
-                        INSERT INTO your_table2 (x, yu,yo,werkauftrag, datum)
-                        VALUES (%s, %s,%s, %s,%s)
-                    """
-                    # Execute the SQL query for each data1.txt row
-                    cursor.executemany(insert_query, data_to_insert)
-                    connection.commit()
-                    print("Data inserted successfully to your_table2")
                 except pymysql.Error as e:
                     print(f"Error connecting to MySQL database: {e}")
                 finally:
