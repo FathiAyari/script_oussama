@@ -73,6 +73,9 @@ def treat_data(file_path):
                             datum varchar(255)
                         )
                     """
+                    cursor.execute(create_table_query)
+                    print("Table created successfully or already exists")
+
                     get_max_index_query = """select  max(line_index) from your_table"""
                     cursor.execute(get_max_index_query)
                     max_index = cursor.fetchone()[0]
@@ -85,9 +88,7 @@ def treat_data(file_path):
                     else:
                         line_index += 1
 
-                    # Execute the SQL query
-                    cursor.execute(create_table_query)
-                    print("Table created successfully or already exists")
+
 
                     data_to_insert = [(line_index, x, y, werkauftrag, date) for x, y in zip(valuesX, valuesY)]
                     # SQL query to insert data1.txt into the table
